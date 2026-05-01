@@ -33,7 +33,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!mounted) return;
     final prefs = await SharedPreferences.getInstance();
     final seenOnboarding = prefs.getBool('seen_onboarding') ?? false;
-    final session = Supabase.instance.client.auth.currentSession;
+    Session? session;
+    try {
+      session = Supabase.instance.client.auth.currentSession;
+    } catch (_) {
+      session = null;
+    }
 
     if (!seenOnboarding) {
       context.go('/onboarding');

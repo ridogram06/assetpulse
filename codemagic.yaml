@@ -18,7 +18,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - $CM_EMAIL
+          - ridogram06@gmail.com
         notify:
           success: true
           failure: true
@@ -42,7 +42,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - $CM_EMAIL
+          - ridogram06@gmail.com
         notify:
           success: true
           failure: true

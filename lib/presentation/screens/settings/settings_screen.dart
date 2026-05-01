@@ -1,0 +1,275 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
+
+class SettingsScreen extends ConsumerWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      appBar: AppBar(
+        backgroundColor: AppColors.bg,
+        title: const Text('সেটিংস', style: AppTextStyles.titleLarge),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new,
+              color: AppColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Profile card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.cardBorder),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AppColors.accent.withOpacity(0.2),
+                  child: const Text('👤', style: TextStyle(fontSize: 24)),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.userMetadata?['display_name'] as String? ?? 'ব্যবহারকারী',
+                        style: AppTextStyles.titleMedium,
+                      ),
+                      Text(user?.email ?? '',
+                          style: AppTextStyles.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text('সাধারণ', style: AppTextStyles.bodySmall),
+          const SizedBox(height: 8),
+          _SettingsGroup(items: [
+            _SettingsTile(
+              icon: Icons.currency_exchange,
+              label: 'মুদ্রা',
+              trailing: 'BDT ৳',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.palette_outlined,
+              label: 'থিম',
+              trailing: 'ডার্ক',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.language,
+              label: 'ভাষা',
+              trailing: 'বাংলা',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'বাজেট',
+              onTap: () {},
+            ),
+          ]),
+          const SizedBox(height: 20),
+          const Text('অর্গানাইজেশন', style: AppTextStyles.bodySmall),
+          const SizedBox(height: 8),
+          _SettingsGroup(items: [
+            _SettingsTile(
+              icon: Icons.folder_outlined,
+              label: 'ভল্ট',
+              onTap: () => context.push('/vaults'),
+            ),
+            _SettingsTile(
+              icon: Icons.payment_outlined,
+              label: 'পেমেন্ট পদ্ধতি',
+              onTap: () {},
+            ),
+          ]),
+          const SizedBox(height: 20),
+          const Text('নিরাপত্তা', style: AppTextStyles.bodySmall),
+          const SizedBox(height: 8),
+          _SettingsGroup(items: [
+            _SettingsTile(
+              icon: Icons.security_outlined,
+              label: '2FA সেটআপ',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.fingerprint,
+              label: 'বায়োমেট্রিক',
+              onTap: () {},
+            ),
+          ]),
+          const SizedBox(height: 20),
+          const Text('ডেটা', style: AppTextStyles.bodySmall),
+          const SizedBox(height: 8),
+          _SettingsGroup(items: [
+            _SettingsTile(
+              icon: Icons.download_outlined,
+              label: 'CSV এক্সপোর্ট',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.picture_as_pdf_outlined,
+              label: 'PDF রিপোর্ট',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.upload_outlined,
+              label: 'CSV ইম্পোর্ট',
+              onTap: () {},
+            ),
+          ]),
+          const SizedBox(height: 20),
+          _SettingsGroup(items: [
+            _SettingsTile(
+              icon: Icons.info_outline,
+              label: 'সম্পর্কে',
+              trailing: 'v1.0.0',
+              onTap: () {},
+            ),
+            _SettingsTile(
+              icon: Icons.feedback_outlined,
+              label: 'ফিডব্যাক পাঠান',
+              onTap: () {},
+            ),
+          ]),
+          const SizedBox(height: 20),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.critical,
+              side: const BorderSide(color: AppColors.critical),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            icon: const Icon(Icons.logout),
+            label: const Text('লগআউট'),
+            onPressed: () async {
+              HapticFeedback.mediumImpact();
+              await Supabase.instance.client.auth.signOut();
+              if (context.mounted) context.go('/login');
+            },
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.critical,
+              side: BorderSide(color: AppColors.critical.withOpacity(0.5)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            icon: const Icon(Icons.delete_forever_outlined),
+            label: const Text('অ্যাকাউন্ট মুছুন'),
+            onPressed: () => _confirmDelete(context),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('অ্যাকাউন্ট মুছবেন?',
+            style: AppTextStyles.titleMedium),
+        content: const Text(
+          'এই কাজটি অপরিবর্তনীয়। আপনার সব ডেটা স্থায়ীভাবে মুছে যাবে।',
+          style: AppTextStyles.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('বাতিল')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('মুছুন',
+                style: TextStyle(color: AppColors.critical)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  final List<Widget> items;
+  const _SettingsGroup({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        children: items.asMap().entries.map((e) {
+          final isLast = e.key == items.length - 1;
+          return Column(
+            children: [
+              e.value,
+              if (!isLast)
+                const Divider(
+                    height: 1, color: AppColors.cardBorder, indent: 52),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? trailing;
+  final VoidCallback onTap;
+  const _SettingsTile({
+    required this.icon,
+    required this.label,
+    this.trailing,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.textSecondary, size: 20),
+      title: Text(label, style: AppTextStyles.bodyLarge),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (trailing != null)
+            Text(trailing!, style: AppTextStyles.bodySmall),
+          const SizedBox(width: 4),
+          const Icon(Icons.chevron_right,
+              color: AppColors.textMuted, size: 18),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+}

@@ -14,10 +14,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Supabase - don't crash if not configured
-  const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
-      defaultValue: 'https://placeholder.supabase.co');
-  const supabaseKey = String.fromEnvironment('SUPABASE_ANON_KEY',
-      defaultValue: 'placeholder-anon-key');
+  const supabaseUrl = 'https://coguoqqkcwdqbhwlvvao.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZ3VvcXFrY3dkcWJod2x2dmFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NTQ2MTcsImV4cCI6MjA5MzIzMDYxN30.ybw73ih7cGhHNOeVj6M0YPT9OomN9ccNwHI55v8mxII';
 
   try {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseKey);

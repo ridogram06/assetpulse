@@ -2,7 +2,8 @@
 -- Run this in Supabase SQL Editor
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pg_cron";
+-- pg_cron may not be available on free tier, skip if errors
+-- CREATE EXTENSION IF NOT EXISTS "pg_cron";
 
 -- TABLE 1: PROFILES
 CREATE TABLE profiles (
@@ -243,7 +244,8 @@ BEGIN
 END;
 $$;
 
-SELECT cron.schedule('nightly-asset-scan', '0 0 * * *', $$ SELECT update_asset_statuses(); $$);
+-- pg_cron scheduling (enable manually if available)
+-- SELECT cron.schedule('nightly-asset-scan', '0 0 * * *', $$ SELECT update_asset_statuses(); $$);
 
 -- ROW LEVEL SECURITY
 ALTER TABLE profiles             ENABLE ROW LEVEL SECURITY;

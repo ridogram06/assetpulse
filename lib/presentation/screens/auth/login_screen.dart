@@ -40,7 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() { _loading = true; _error = null; });
     try {
-      await Supabase.instance.client.auth.signInWithOAuth(OAuthProvider.google);
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'com.assetpulse.assetpulse://login-callback',
+      );
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {

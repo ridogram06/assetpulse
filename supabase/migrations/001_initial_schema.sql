@@ -105,13 +105,28 @@ CREATE TABLE asset_history (
   currency      TEXT    DEFAULT 'BDT',
   start_date    DATE    NOT NULL,
   finished_at   TIMESTAMPTZ NOT NULL,
-  lifespan_days INT     GENERATED ALWAYS AS
-                (EXTRACT(DAY FROM finished_at - start_date::TIMESTAMPTZ)::INT) STORED,
-  cost_per_day  NUMERIC(10,4) GENERATED ALWAYS AS
-                (cost / NULLIF(EXTRACT(DAY FROM finished_at - start_date::TIMESTAMPTZ), 0)) STORED,
+  lifespan_days INT,
+  cost_per_day  NUMERIC(10,4),
   notes         TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Trigger to auto-calculate lifespan_days and cost_per_day
+CREATE OR REPLACE FUNCTION calc_history_fields()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.lifespan_days := (NEW.finished_at::DATE - NEW.start_date)::INT;
+  IF NEW.lifespan_days > 0 THEN
+    NEW.cost_per_day := NEW.cost / NEW.lifespan_days;
+  ELSE
+    NEW.cost_per_day := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER calc_history_on_insert
+  BEFORE INSERT OR UPDATE ON asset_history
+  FOR EACH ROW EXECUTE FUNCTION calc_history_fields();
 
 -- TABLE 6: AUDIT LOG
 CREATE TABLE audit_log (

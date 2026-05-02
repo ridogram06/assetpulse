@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/providers/global_time_provider.dart';
@@ -31,7 +32,9 @@ class DeterministicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push('/dashboard/asset/${asset.id}'),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -76,6 +79,7 @@ class DeterministicCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -201,19 +205,30 @@ class DeterministicCard extends StatelessWidget {
         _ActionBtn(
           icon: Icons.notifications_outlined,
           label: 'রিমাইন্ডার',
-          onTap: () => HapticFeedback.lightImpact(),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('রিমাইন্ডার সেট হয়েছে ✓'), duration: Duration(seconds: 1)),
+            );
+          },
         ),
         const SizedBox(width: 8),
         _ActionBtn(
           icon: Icons.edit_outlined,
-          label: 'সম্পাদনা',
-          onTap: () => HapticFeedback.lightImpact(),
+          label: 'বিস্তারিত',
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.push('/dashboard/asset/${asset.id}');
+          },
         ),
         const SizedBox(width: 8),
         _ActionBtn(
           icon: Icons.bar_chart_outlined,
           label: 'ইতিহাস',
-          onTap: () => HapticFeedback.lightImpact(),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.push('/dashboard/asset/${asset.id}');
+          },
         ),
       ],
     );

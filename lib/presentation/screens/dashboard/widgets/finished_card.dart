@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../data/models/asset_model.dart';
@@ -15,7 +16,9 @@ class FinishedCard extends StatelessWidget {
     final days = duration?.inDays ?? 0;
     final costPerDay = days > 0 ? asset.cost / days : 0.0;
 
-    return Container(
+    return GestureDetector(
+      onTap: () => context.push('/dashboard/asset/${asset.id}'),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -77,6 +80,7 @@ class FinishedCard extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

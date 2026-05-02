@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/providers/global_time_provider.dart';
 import '../../../../data/models/asset_model.dart';
+import '../../../providers/asset_provider.dart';
 
-class ProbabilisticCard extends StatelessWidget {
+class ProbabilisticCard extends ConsumerWidget {
   final AssetModel asset;
   const ProbabilisticCard({super.key, required this.asset});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () => context.push('/dashboard/asset/${asset.id}'),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -49,6 +55,7 @@ class ProbabilisticCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -134,6 +141,8 @@ class ProbabilisticCard extends StatelessWidget {
   }
 
   Widget _buildMarkFinishedButton(BuildContext context) {
+    // Need ref for invalidation — use Consumer
+    return Consumer(builder: (context, ref, _) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -149,15 +158,16 @@ class ProbabilisticCard extends StatelessWidget {
         ),
         onPressed: () {
           HapticFeedback.mediumImpact();
-          _showMarkFinishedSheet(context);
+          _showMarkFinishedSheet(context, ref);
         },
         child: const Text('✅ শেষ হয়েছে',
             style: TextStyle(fontWeight: FontWeight.w700)),
       ),
     );
+    });
   }
 
-  void _showMarkFinishedSheet(BuildContext context) {
+  void _showMarkFinishedSheet(BuildContext context, WidgetRef ref) {
     final elapsed = DateTime.now().difference(asset.startDate);
     showModalBottomSheet(
       context: context,
@@ -203,7 +213,35 @@ class ProbabilisticCard extends StatelessWidget {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () async {
+                      final client = Supabase.instance.client;
+                      final now = DateTime.now();
+                      final lifespanDays = now.difference(asset.startDate).inDays;
+
+                      // Insert history entry
+                      await client.from('asset_history').insert({
+                        'id': const Uuid().v4(),
+                        'user_id': asset.userId,
+                        'asset_id': asset.id,
+                        'asset_name': asset.name,
+                        'category': asset.category,
+                        'cost': asset.cost,
+                        'currency': asset.currency,
+                        'start_date': asset.startDate.toIso8601String().split('T').first,
+                        'finished_at': now.toIso8601String(),
+                        'notes': null,
+                        'created_at': now.toIso8601String(),
+                      });
+
+                      // Mark asset as finished
+                      await client.from('assets').update({
+                        'status': 'finished',
+                        'finished_at': now.toIso8601String(),
+                      }).eq('id', asset.id);
+
+                      ref.invalidate(assetsProvider);
+                      if (context.mounted) Navigator.pop(context);
+                    },
                     child: const Text('নিশ্চিত'),
                   ),
                 ),

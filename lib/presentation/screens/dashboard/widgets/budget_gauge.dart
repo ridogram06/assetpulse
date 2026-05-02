@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../data/models/asset_model.dart';
+import '../../../providers/auth_provider.dart';
 
-class BudgetGauge extends StatelessWidget {
+class BudgetGauge extends ConsumerWidget {
   final List<AssetModel> assets;
   const BudgetGauge({super.key, required this.assets});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final spent = assets
         .where((a) => a.isDeterministic && a.status != 'expired')
         .fold<double>(0, (s, a) => s + a.cost);
-    const budget = 5000.0; // TODO: load from profile
+    final profile = ref.watch(profileProvider).valueOrNull;
+    final budget = (profile?['monthly_budget'] as num?)?.toDouble() ?? 5000.0;
     final ratio = (spent / budget).clamp(0.0, 1.0);
     final color = ratio > 1.0
         ? AppColors.critical

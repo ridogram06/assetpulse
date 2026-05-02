@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../providers/asset_provider.dart';
@@ -111,7 +112,9 @@ class AssetDetailScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      Navigator.pop(context);
+      await Supabase.instance.client.from('assets').delete().eq('id', id);
+      ref.invalidate(assetsProvider);
+      if (context.mounted) Navigator.pop(context);
     }
   }
 }

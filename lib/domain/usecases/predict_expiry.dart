@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../lib/core/utils/prediction_engine.dart';
+import '../../core/utils/prediction_engine.dart';
 
 class PredictExpiry {
   final SupabaseClient _client;

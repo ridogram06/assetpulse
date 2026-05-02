@@ -31,14 +31,8 @@ class _SignupScreenState extends State<SignupScreen> {
         data: {'display_name': _nameCtrl.text.trim()},
       );
       if (res.user != null) {
-        await Supabase.instance.client.from('profiles').upsert({
-          'id': res.user!.id,
-          'display_name': _nameCtrl.text.trim(),
-          'currency': 'BDT',
-          'currency_symbol': '৳',
-          'language': 'bn',
-          'theme': 'dark',
-        });
+        // Profile is auto-created by DB trigger handle_new_user()
+        // Just navigate to dashboard
         if (mounted) context.go('/dashboard');
       }
     } on AuthException catch (e) {

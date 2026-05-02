@@ -16,7 +16,7 @@ import '../../presentation/screens/vault/vault_manager_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     redirect: (context, state) {
       final session = Supabase.instance.client.auth.currentSession;
@@ -58,4 +58,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       body: Center(child: Text('Page not found: ${state.error}')),
     ),
   );
+
+  // Listen for auth state changes (Google OAuth redirect, sign out, etc.)
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    final event = data.event;
+    if (event == AuthChangeEvent.signedIn) {
+      router.go('/dashboard');
+    } else if (event == AuthChangeEvent.signedOut) {
+      router.go('/login');
+    }
+  });
+
+  return router;
 });

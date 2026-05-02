@@ -60,7 +60,7 @@ class ProbabilisticCard extends ConsumerWidget {
   }
 
   Widget _buildHeader() {
-    final elapsed = DateTime.now().difference(asset.startDate);
+    final elapsed = DateTime.now().difference(asset.createdAt);
     final costPerDay = elapsed.inDays > 0
         ? asset.cost / elapsed.inDays
         : asset.cost;
@@ -91,7 +91,7 @@ class ProbabilisticCard extends ConsumerWidget {
     return Consumer(
       builder: (context, ref, child) {
         final now = ref.watch(globalTimeProvider).value ?? DateTime.now();
-        final delta = now.difference(asset.startDate);
+        final delta = now.difference(asset.createdAt);
 
         return RepaintBoundary(
           child: Row(

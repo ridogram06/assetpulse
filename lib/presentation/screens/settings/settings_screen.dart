@@ -67,24 +67,24 @@ class SettingsScreen extends ConsumerWidget {
               icon: Icons.currency_exchange,
               label: 'মুদ্রা',
               trailing: 'BDT ৳',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
             _SettingsTile(
               icon: Icons.palette_outlined,
               label: 'থিম',
               trailing: 'ডার্ক',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
             _SettingsTile(
               icon: Icons.language,
               label: 'ভাষা',
               trailing: 'বাংলা',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
             _SettingsTile(
               icon: Icons.account_balance_wallet_outlined,
               label: 'বাজেট',
-              onTap: () {},
+              onTap: () => _editBudget(context),
             ),
           ]),
           const SizedBox(height: 20),
@@ -99,7 +99,7 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(
               icon: Icons.payment_outlined,
               label: 'পেমেন্ট পদ্ধতি',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
           ]),
           const SizedBox(height: 20),
@@ -109,12 +109,12 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(
               icon: Icons.security_outlined,
               label: '2FA সেটআপ',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
             _SettingsTile(
               icon: Icons.fingerprint,
               label: 'বায়োমেট্রিক',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
           ]),
           const SizedBox(height: 20),
@@ -124,17 +124,17 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(
               icon: Icons.download_outlined,
               label: 'CSV এক্সপোর্ট',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
             _SettingsTile(
               icon: Icons.picture_as_pdf_outlined,
               label: 'PDF রিপোর্ট',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
             _SettingsTile(
               icon: Icons.upload_outlined,
               label: 'CSV ইম্পোর্ট',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
           ]),
           const SizedBox(height: 20),
@@ -143,12 +143,12 @@ class SettingsScreen extends ConsumerWidget {
               icon: Icons.info_outline,
               label: 'সম্পর্কে',
               trailing: 'v1.0.0',
-              onTap: () {},
+              onTap: () => _showAbout(context),
             ),
             _SettingsTile(
               icon: Icons.feedback_outlined,
               label: 'ফিডব্যাক পাঠান',
-              onTap: () {},
+              onTap: () => _comingSoon(context),
             ),
           ]),
           const SizedBox(height: 20),
@@ -183,6 +183,97 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  void _comingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('শীঘ্রই আসছে 🚧'), duration: Duration(seconds: 1)),
+    );
+  }
+
+  void _showAbout(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'AssetPulse',
+      applicationVersion: 'v1.0.0',
+      applicationLegalese: '© 2026 AssetPulse',
+      children: const [
+        SizedBox(height: 12),
+        Text('সম্পদ ও ব্যয় ট্র্যাকার'),
+      ],
+    );
+  }
+
+  void _editBudget(BuildContext context) {
+    final ctrl = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => Padding(
+        padding: EdgeInsets.fromLTRB(
+            24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppColors.cardBorder,
+                    borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 20),
+            const Text('মাসিক বাজেট', style: AppTextStyles.titleLarge),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.number,
+              style: AppTextStyles.bodyLarge,
+              decoration: InputDecoration(
+                labelText: 'বাজেট (৳)',
+                labelStyle: AppTextStyles.bodyMedium,
+                filled: true,
+                fillColor: AppColors.card,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: AppColors.cardBorder)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () async {
+                final v = double.tryParse(ctrl.text.trim());
+                if (v == null) return;
+                final client = Supabase.instance.client;
+                final uid = client.auth.currentUser?.id;
+                if (uid == null) return;
+                await client
+                    .from('profiles')
+                    .update({'monthly_budget': v}).eq('id', uid);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('বাজেট সংরক্ষিত ✓')),
+                  );
+                }
+              },
+              child: const Text('সংরক্ষণ'),
+            ),
+          ],
+        ),
       ),
     );
   }

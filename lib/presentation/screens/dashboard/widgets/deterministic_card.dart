@@ -125,15 +125,15 @@ class DeterministicCard extends StatelessWidget {
 
   Widget _buildDualTimePanel() {
     if (asset.endDate == null) return const SizedBox.shrink();
-    final now = DateTime.now();
-    final elapsed = now.difference(asset.startDate).inDays;
-    final total = asset.endDate!.difference(asset.startDate).inDays;
-    final remaining = asset.endDate!.difference(now).inDays;
+    final totalDuration = asset.endDate!.difference(asset.startDate);
 
     return Consumer(
       builder: (context, ref, _) {
         final liveNow = ref.watch(globalTimeProvider).value ?? DateTime.now();
-        final liveRemaining = asset.endDate!.difference(liveNow);
+        final elapsedDur = liveNow.difference(asset.createdAt);
+        final elapsed = elapsedDur.inDays;
+        final liveRemaining = totalDuration - elapsedDur;
+        final remaining = liveRemaining.inDays;
         final hrs = liveRemaining.inHours % 24;
         final mins = liveRemaining.inMinutes % 60;
 
@@ -168,8 +168,8 @@ class DeterministicCard extends StatelessWidget {
   Widget _buildProgressBar() {
     if (asset.endDate == null) return const SizedBox.shrink();
     final now = DateTime.now();
-    final elapsed = now.difference(asset.startDate).inDays;
-    final total = asset.endDate!.difference(asset.startDate).inDays;
+    final elapsed = now.difference(asset.createdAt).inSeconds;
+    final total = asset.endDate!.difference(asset.startDate).inSeconds;
     final ratio = total > 0 ? (elapsed / total).clamp(0.0, 1.0) : 0.0;
 
     return Stack(

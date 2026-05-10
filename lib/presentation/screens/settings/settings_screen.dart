@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/preferences_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -12,6 +13,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = Supabase.instance.client.auth.currentUser;
+    final currency = ref.watch(currencyProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -66,14 +69,14 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(
               icon: Icons.currency_exchange,
               label: 'মুদ্রা',
-              trailing: 'BDT ৳',
-              onTap: () => _comingSoon(context),
+              trailing: '${currency.code} ${currency.symbol}',
+              onTap: () => _pickCurrency(context, ref),
             ),
             _SettingsTile(
               icon: Icons.palette_outlined,
               label: 'থিম',
-              trailing: 'ডার্ক',
-              onTap: () => _comingSoon(context),
+              trailing: themeMode.banglaLabel,
+              onTap: () => _pickTheme(context, ref),
             ),
             _SettingsTile(
               icon: Icons.language,
@@ -99,7 +102,7 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(
               icon: Icons.payment_outlined,
               label: 'পেমেন্ট পদ্ধতি',
-              onTap: () => _comingSoon(context),
+              onTap: () => context.push('/payment-methods'),
             ),
           ]),
           const SizedBox(height: 20),
@@ -183,6 +186,130 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  void _pickCurrency(BuildContext context, WidgetRef ref) {
+    final current = ref.read(currencyProvider);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: AppColors.cardBorder,
+                        borderRadius: BorderRadius.circular(2))),
+              ),
+              const SizedBox(height: 16),
+              const Text('মুদ্রা নির্বাচন', style: AppTextStyles.titleLarge),
+              const SizedBox(height: 12),
+              ...Currency.all.map((c) {
+                final selected = c.code == current.code;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppColors.accent.withOpacity(0.18)
+                          : AppColors.card,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(c.symbol,
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: selected
+                                ? AppColors.accent
+                                : AppColors.textPrimary)),
+                  ),
+                  title: Text(c.label, style: AppTextStyles.bodyLarge),
+                  trailing: selected
+                      ? const Icon(Icons.check_circle,
+                          color: AppColors.accent)
+                      : null,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    await ref.read(currencyProvider.notifier).set(c);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _pickTheme(BuildContext context, WidgetRef ref) {
+    final current = ref.read(themeModeProvider);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: AppColors.cardBorder,
+                        borderRadius: BorderRadius.circular(2))),
+              ),
+              const SizedBox(height: 16),
+              const Text('থিম নির্বাচন', style: AppTextStyles.titleLarge),
+              const SizedBox(height: 12),
+              ...ThemeMode.values.map((m) {
+                final selected = m == current;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    m == ThemeMode.light
+                        ? Icons.light_mode
+                        : m == ThemeMode.dark
+                            ? Icons.dark_mode
+                            : Icons.brightness_auto,
+                    color: selected
+                        ? AppColors.accent
+                        : AppColors.textSecondary,
+                  ),
+                  title: Text(m.banglaLabel, style: AppTextStyles.bodyLarge),
+                  trailing: selected
+                      ? const Icon(Icons.check_circle,
+                          color: AppColors.accent)
+                      : null,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    await ref.read(themeModeProvider.notifier).set(m);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }

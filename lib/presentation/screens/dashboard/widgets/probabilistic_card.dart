@@ -8,6 +8,7 @@ import '../../../../core/providers/global_time_provider.dart';
 import '../../../../data/models/asset_model.dart';
 import 'mark_finished_sheet.dart';
 import '../../../widgets/asset_health_ring.dart';
+import '../../../../core/providers/preferences_provider.dart';
 
 class ProbabilisticCard extends ConsumerWidget {
   final AssetModel asset;
@@ -15,6 +16,7 @@ class ProbabilisticCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currency = ref.watch(currencyProvider);
     return GestureDetector(
       onTap: () => context.push('/dashboard/asset/${asset.id}'),
       child: Container(
@@ -39,7 +41,7 @@ class ProbabilisticCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
+                _buildHeader(currency),
                 const SizedBox(height: 12),
                 _buildLiveClockPanel(),
                 if (asset.predictionConfidence != null &&
@@ -58,7 +60,7 @@ class ProbabilisticCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Currency currency) {
     final elapsed = DateTime.now().difference(asset.createdAt);
     final costPerDay = elapsed.inDays > 0
         ? asset.cost / elapsed.inDays
@@ -75,7 +77,7 @@ class ProbabilisticCard extends ConsumerWidget {
               Text(asset.name, style: AppTextStyles.titleMedium),
               const SizedBox(height: 2),
               Text(
-                '৳${costPerDay.toStringAsFixed(2)}/দিন · মোট ৳${asset.cost.toStringAsFixed(0)}',
+                '${currency.symbol}${costPerDay.toStringAsFixed(2)}/দিন · মোট ${currency.symbol}${asset.cost.toStringAsFixed(0)}',
                 style: AppTextStyles.bodySmall,
               ),
             ],

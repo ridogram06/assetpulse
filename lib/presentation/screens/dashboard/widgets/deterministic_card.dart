@@ -7,8 +7,9 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/providers/global_time_provider.dart';
 import '../../../../data/models/asset_model.dart';
 import '../../../widgets/asset_health_ring.dart';
+import '../../../../core/providers/preferences_provider.dart';
 
-class DeterministicCard extends StatelessWidget {
+class DeterministicCard extends ConsumerWidget {
   final AssetModel asset;
   const DeterministicCard({super.key, required this.asset});
 
@@ -32,7 +33,8 @@ class DeterministicCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currency = ref.watch(currencyProvider);
     return GestureDetector(
       onTap: () => context.push('/dashboard/asset/${asset.id}'),
       child: Container(
@@ -68,7 +70,7 @@ class DeterministicCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
+                _buildHeader(currency),
                 const SizedBox(height: 12),
                 _buildDualTimePanel(),
                 const SizedBox(height: 12),
@@ -84,7 +86,7 @@ class DeterministicCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Currency currency) {
     return Row(
       children: [
         Text(asset.icon, style: const TextStyle(fontSize: 28)),
@@ -113,7 +115,7 @@ class DeterministicCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text('৳${asset.cost.toStringAsFixed(0)}/মাস',
+                  Text('${currency.symbol}${asset.cost.toStringAsFixed(0)}/মাস',
                       style: AppTextStyles.bodySmall),
                 ],
               ),

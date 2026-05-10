@@ -14,6 +14,7 @@ import '../../presentation/screens/analytics/analytics_screen.dart';
 import '../../presentation/screens/notifications/notification_center_screen.dart';
 import '../../presentation/screens/vault/vault_manager_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
+import '../../presentation/screens/settings/payment_methods_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -52,7 +53,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/analytics',     builder: (_, __) => const AnalyticsScreen()),
       GoRoute(path: '/notifications', builder: (_, __) => const NotificationCenterScreen()),
       GoRoute(path: '/vaults',        builder: (_, __) => const VaultManagerScreen()),
-      GoRoute(path: '/settings',      builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/settings',         builder: (_, __) => const SettingsScreen()),
+      GoRoute(path: '/payment-methods',  builder: (_, __) => const PaymentMethodsScreen()),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(child: Text('Page not found: ${state.error}')),

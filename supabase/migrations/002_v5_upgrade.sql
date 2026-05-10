@@ -316,9 +316,17 @@ EXCEPTION WHEN OTHERS THEN
   NULL;
 END $$;
 
--- Schedule the new master job at midnight UTC (06:00 BDT)
-SELECT cron.schedule(
-  'nightly-master',
-  '0 0 * * *',
-  $$ SELECT nightly_master_job(); $$
-);
+-- Schedule the new master job at midnight UTC (06:00 BDT).
+-- Wrapped so the migration succeeds even if pg_cron is not enabled yet.
+-- Enable pg_cron under: Database → Extensions, then re-run THIS block only.
+DO $$
+BEGIN
+  PERFORM cron.schedule(
+    'nightly-master',
+    '0 0 * * *',
+    $cron$ SELECT nightly_master_job(); $cron$
+  );
+  RAISE NOTICE 'pg_cron schedule installed: nightly-master @ 00:00 UTC';
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'pg_cron not available — schedule skipped (%). Enable pg_cron extension and re-run this block.', SQLERRM;
+END $$;

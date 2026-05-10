@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/providers/global_time_provider.dart';
 import '../../../../data/models/asset_model.dart';
-import '../../../providers/asset_provider.dart';
+import 'mark_finished_sheet.dart';
 
 class ProbabilisticCard extends ConsumerWidget {
   final AssetModel asset;
@@ -141,8 +139,6 @@ class ProbabilisticCard extends ConsumerWidget {
   }
 
   Widget _buildMarkFinishedButton(BuildContext context) {
-    // Need ref for invalidation — use Consumer
-    return Consumer(builder: (context, ref, _) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
@@ -158,100 +154,19 @@ class ProbabilisticCard extends ConsumerWidget {
         ),
         onPressed: () {
           HapticFeedback.mediumImpact();
-          _showMarkFinishedSheet(context, ref);
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => MarkFinishedSheet(asset: asset),
+          );
         },
         child: const Text('✅ শেষ হয়েছে',
             style: TextStyle(fontWeight: FontWeight.w700)),
       ),
     );
-    });
   }
 
-  void _showMarkFinishedSheet(BuildContext context, WidgetRef ref) {
-    final elapsed = DateTime.now().difference(asset.startDate);
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 40, height: 4,
-                decoration: BoxDecoration(color: AppColors.cardBorder,
-                    borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 24),
-            const Text('মোট আয়ু নিশ্চিত করুন',
-                style: AppTextStyles.titleLarge),
-            const SizedBox(height: 12),
-            Text(
-              '${elapsed.inDays} দিন ${elapsed.inHours % 24} ঘণ্টা',
-              style: AppTextStyles.headlineMedium
-                  .copyWith(color: AppColors.active),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textSecondary,
-                      side: const BorderSide(color: AppColors.cardBorder),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('বাতিল'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.active,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () async {
-                      final client = Supabase.instance.client;
-                      final now = DateTime.now();
-                      final lifespanDays = now.difference(asset.startDate).inDays;
-
-                      // Insert history entry
-                      await client.from('asset_history').insert({
-                        'id': const Uuid().v4(),
-                        'user_id': asset.userId,
-                        'asset_id': asset.id,
-                        'asset_name': asset.name,
-                        'category': asset.category,
-                        'cost': asset.cost,
-                        'currency': asset.currency,
-                        'start_date': asset.startDate.toIso8601String().split('T').first,
-                        'finished_at': now.toIso8601String(),
-                        'notes': null,
-                        'created_at': now.toIso8601String(),
-                      });
-
-                      // Mark asset as finished
-                      await client.from('assets').update({
-                        'status': 'finished',
-                        'finished_at': now.toIso8601String(),
-                      }).eq('id', asset.id);
-
-                      ref.invalidate(assetsProvider);
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: const Text('নিশ্চিত'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _Segment extends StatelessWidget {

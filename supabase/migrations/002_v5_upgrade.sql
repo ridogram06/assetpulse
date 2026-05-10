@@ -156,7 +156,8 @@ CREATE TABLE IF NOT EXISTS vault_members (
 );
 
 -- Update assets RLS to allow shared-vault access
-DROP POLICY IF EXISTS "own_data" ON assets;
+DROP POLICY IF EXISTS "own_data"      ON assets;
+DROP POLICY IF EXISTS "own_or_shared" ON assets;
 CREATE POLICY "own_or_shared" ON assets FOR ALL USING (
   auth.uid() = user_id
   OR vault_id IN (

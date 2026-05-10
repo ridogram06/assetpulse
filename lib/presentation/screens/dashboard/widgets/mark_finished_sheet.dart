@@ -120,7 +120,8 @@ class _MarkFinishedSheetState extends ConsumerState<MarkFinishedSheet> {
     try {
       _prediction = await AssetActions.markFinished(widget.asset);
       _history = await AssetActions.recentHistory(
-          widget.asset.userId, widget.asset.name);
+          widget.asset.userId, widget.asset.name,
+          canonicalId: widget.asset.id);
       ref.invalidate(assetsProvider);
       if (mounted) setState(() => _step = 1);
     } catch (e) {

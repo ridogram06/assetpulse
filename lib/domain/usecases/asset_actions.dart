@@ -35,11 +35,13 @@ class AssetActions {
   static Future<Map<String, dynamic>?> markFinished(AssetModel asset) async {
     final finishedAt = DateTime.now();
 
-    // Step 3: history insert (lifespan_days/cost_per_day are GENERATED in DB)
+    // Step 3: history insert (FIX-3: tag with canonical_asset_id so prediction
+    // history survives renames/deletes of the source asset row).
     await _c.from('asset_history').insert({
       'id': const Uuid().v4(),
       'user_id': asset.userId,
       'asset_id': asset.id,
+      'canonical_asset_id': asset.id,
       'asset_name': asset.name,
       'category': asset.category,
       'cost': asset.cost,
@@ -62,6 +64,7 @@ class AssetActions {
         'p_user_id': asset.userId,
         'p_asset_name': asset.name,
         'p_start_date': finishedAt.toIso8601String().split('T').first,
+        'p_canonical_id': asset.id, // FIX-3: rename-safe history match
       });
       if (res is List && res.isNotEmpty) {
         return Map<String, dynamic>.from(res.first as Map);
@@ -72,9 +75,22 @@ class AssetActions {
     return null;
   }
 
-  /// Fetch last 2 history entries for comparison panel
+  /// Fetch last 2 history entries for comparison panel.
+  /// FIX-3: Prefer canonical_asset_id match; fall back to name if none found.
   static Future<List<Map<String, dynamic>>> recentHistory(
-      String userId, String assetName) async {
+      String userId, String assetName,
+      {String? canonicalId}) async {
+    if (canonicalId != null) {
+      final byCanonical = await _c
+          .from('asset_history')
+          .select()
+          .eq('user_id', userId)
+          .eq('canonical_asset_id', canonicalId)
+          .order('finished_at', ascending: false)
+          .limit(2);
+      final list = List<Map<String, dynamic>>.from(byCanonical as List);
+      if (list.isNotEmpty) return list;
+    }
     final data = await _c
         .from('asset_history')
         .select()

@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/providers/global_time_provider.dart';
 import '../../../../data/models/asset_model.dart';
+import '../../../widgets/asset_health_ring.dart';
 
 class DeterministicCard extends StatelessWidget {
   final AssetModel asset;
@@ -119,6 +120,7 @@ class DeterministicCard extends StatelessWidget {
             ],
           ),
         ),
+        AssetHealthRing(asset: asset),
       ],
     );
   }

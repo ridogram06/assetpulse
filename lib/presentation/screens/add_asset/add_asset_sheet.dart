@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/auto_category_util.dart';
 import '../../../data/models/asset_model.dart';
 import '../../providers/asset_provider.dart';
 
@@ -27,6 +28,34 @@ class _AddAssetSheetState extends ConsumerState<AddAssetSheet> {
   String _category = 'সাবস্ক্রিপশন';
   bool _autoRenew = false;
   bool _saving = false;
+
+  // FEAT-3: live suggestion based on the typed name
+  CategoryHint? _suggestion;
+  bool _suggestionDismissed = false;
+  bool _suggestionApplied = false;
+
+  void _onNameChanged(String value) {
+    final hint = AutoCategory.suggest(value);
+    setState(() {
+      _suggestion = hint;
+      // If user clears or types something else, allow new prompts again
+      if (hint == null) {
+        _suggestionDismissed = false;
+        _suggestionApplied = false;
+      }
+    });
+  }
+
+  void _applySuggestion() {
+    final s = _suggestion;
+    if (s == null) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _category = s.category;
+      _icon = s.icon;
+      _suggestionApplied = true;
+    });
+  }
 
   final _categories = [
     '📱 সাবস্ক্রিপশন', '⚡ বিদ্যুৎ', '⛽ গ্যাস', '💧 পানি',
@@ -179,7 +208,29 @@ class _AddAssetSheetState extends ConsumerState<AddAssetSheet> {
       children: [
         const Text('মূল তথ্য', style: AppTextStyles.titleMedium),
         const SizedBox(height: 12),
-        _Input(controller: _nameCtrl, label: 'সম্পদের নাম (যেমন: Netflix)'),
+        _Input(
+          controller: _nameCtrl,
+          label: 'সম্পদের নাম (যেমন: Netflix)',
+          onChanged: _onNameChanged,
+        ),
+        if (_suggestion != null && !_suggestionDismissed && !_suggestionApplied) ...[
+          const SizedBox(height: 8),
+          _SuggestionChip(
+            hint: _suggestion!,
+            onApply: _applySuggestion,
+            onDismiss: () => setState(() => _suggestionDismissed = true),
+          ),
+        ],
+        if (_suggestionApplied) ...[
+          const SizedBox(height: 8),
+          Row(children: [
+            const Icon(Icons.check_circle, size: 14, color: AppColors.active),
+            const SizedBox(width: 6),
+            Text('${_suggestion!.icon} ${_suggestion!.category} প্রয়োগ করা হয়েছে',
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.active)),
+          ]),
+        ],
         const SizedBox(height: 12),
         _Input(
           controller: _costCtrl,
@@ -338,13 +389,20 @@ class _Input extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final TextInputType? keyboardType;
-  const _Input({required this.controller, required this.label, this.keyboardType});
+  final ValueChanged<String>? onChanged;
+  const _Input({
+    required this.controller,
+    required this.label,
+    this.keyboardType,
+    this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       style: AppTextStyles.bodyLarge,
       decoration: InputDecoration(
         labelText: label,
@@ -360,6 +418,61 @@ class _Input extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppColors.accent)),
+      ),
+    );
+  }
+}
+
+class _SuggestionChip extends StatelessWidget {
+  final CategoryHint hint;
+  final VoidCallback onApply;
+  final VoidCallback onDismiss;
+  const _SuggestionChip({
+    required this.hint,
+    required this.onApply,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: AppColors.blueDim,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.blue.withOpacity(0.4)),
+      ),
+      child: Row(
+        children: [
+          const Text('💡', style: TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${hint.icon} ${hint.category} সাজেস্ট করা হচ্ছে',
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.blue),
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              foregroundColor: AppColors.blue,
+            ),
+            onPressed: onApply,
+            child: const Text('ঠিক আছে'),
+          ),
+          IconButton(
+            iconSize: 18,
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: onDismiss,
+            icon: const Icon(Icons.close,
+                size: 16, color: AppColors.textSecondary),
+          ),
+        ],
       ),
     );
   }

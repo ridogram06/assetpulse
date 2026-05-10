@@ -7,6 +7,7 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/providers/global_time_provider.dart';
 import '../../../../data/models/asset_model.dart';
 import 'mark_finished_sheet.dart';
+import '../../../widgets/asset_health_ring.dart';
 
 class ProbabilisticCard extends ConsumerWidget {
   final AssetModel asset;
@@ -80,6 +81,7 @@ class ProbabilisticCard extends ConsumerWidget {
             ],
           ),
         ),
+        AssetHealthRing(asset: asset),
       ],
     );
   }

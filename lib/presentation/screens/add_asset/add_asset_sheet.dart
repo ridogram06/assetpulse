@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/preferences_provider.dart';
 import '../../../core/utils/auto_category_util.dart';
 import '../../../data/models/asset_model.dart';
 import '../../providers/asset_provider.dart';
@@ -69,6 +70,9 @@ class _AddAssetSheetState extends ConsumerState<AddAssetSheet> {
       final client = Supabase.instance.client;
       final userId = client.auth.currentUser!.id;
       final now = DateTime.now();
+      // FIX: stamp the user's currently selected display currency on the
+      // new asset. Preference defaults to BDT if unset.
+      final activeCurrency = ref.read(currencyProvider).code;
 
       await client.from('assets').insert({
         'id': const Uuid().v4(),
@@ -76,7 +80,7 @@ class _AddAssetSheetState extends ConsumerState<AddAssetSheet> {
         'name': _nameCtrl.text.trim(),
         'asset_type': _assetType,
         'cost': double.tryParse(_costCtrl.text) ?? 0,
-        'currency': 'BDT',
+        'currency': activeCurrency,
         'start_date': _startDate.toIso8601String().split('T').first,
         'end_date': _endDate?.toIso8601String().split('T').first,
         'icon': _icon,
@@ -90,6 +94,12 @@ class _AddAssetSheetState extends ConsumerState<AddAssetSheet> {
 
       ref.invalidate(assetsProvider);
       if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('সংরক্ষণ ব্যর্থ: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

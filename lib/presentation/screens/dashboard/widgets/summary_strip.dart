@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/providers/preferences_provider.dart';
 import '../../../../data/models/asset_model.dart';
 
-class SummaryStrip extends StatelessWidget {
+class SummaryStrip extends ConsumerWidget {
   final List<AssetModel> assets;
   const SummaryStrip({super.key, required this.assets});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final symbol = ref.watch(currencyProvider).symbol;
     final active = assets.where((a) =>
         a.status == 'active' || a.status == 'warning' || a.status == 'critical').length;
     final warnings = assets.where((a) =>
@@ -27,7 +30,7 @@ class SummaryStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Stat(label: 'মাসিক খরচ', value: '৳${monthly.toStringAsFixed(0)}',
+          _Stat(label: 'মাসিক খরচ', value: '$symbol${monthly.toStringAsFixed(0)}',
               color: AppColors.accent),
           _divider(),
           _Stat(label: 'সক্রিয়', value: '$active',

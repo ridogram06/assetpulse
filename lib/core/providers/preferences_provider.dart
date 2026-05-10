@@ -20,10 +20,19 @@ class Currency {
       all.firstWhere((c) => c.code == code, orElse: () => bdt);
 }
 
-/// Format a numeric amount with the active display currency.
+/// Format a numeric amount with a specific currency.
 String formatMoney(num amount, Currency c, {int decimals = 0}) {
   final v = amount.toStringAsFixed(decimals);
   return '${c.symbol}$v';
+}
+
+/// Resolve the right symbol for a stored asset.currency code (e.g. 'BDT').
+/// Falls back to the active display preference when the code is unknown.
+String currencySymbolFor(String? assetCurrencyCode, Currency preference) {
+  if (assetCurrencyCode == null || assetCurrencyCode.isEmpty) {
+    return preference.symbol;
+  }
+  return Currency.fromCode(assetCurrencyCode).symbol;
 }
 
 // =============================================================================

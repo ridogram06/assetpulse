@@ -52,14 +52,36 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signInWithBiometric() async {
+    // FIX (audit): Biometric is unlock-only — it cannot create a Supabase
+    // session by itself. Block the flow when no prior session exists,
+    // so the user isn't dropped on /dashboard with a null currentUser.
+    final existing = Supabase.instance.client.auth.currentSession;
+    if (existing == null) {
+      setState(() => _error =
+          'বায়োমেট্রিক দিয়ে প্রথমবার লগইন করা যাবে না — ইমেইল/গুগল দিয়ে একবার লগইন করুন।');
+      return;
+    }
+
     final auth = LocalAuthentication();
     final canCheck = await auth.canCheckBiometrics;
-    if (!canCheck) return;
-    final authenticated = await auth.authenticate(
-      localizedReason: 'AssetPulse-এ প্রবেশ করুন',
-      options: const AuthenticationOptions(biometricOnly: true),
-    );
-    if (authenticated && mounted) context.go('/dashboard');
+    final isSupported = await auth.isDeviceSupported();
+    if (!canCheck || !isSupported) {
+      setState(() => _error = 'এই ডিভাইসে বায়োমেট্রিক সমর্থিত নয়।');
+      return;
+    }
+
+    try {
+      final authenticated = await auth.authenticate(
+        localizedReason: 'AssetPulse-এ প্রবেশ করুন',
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          stickyAuth: true,
+        ),
+      );
+      if (authenticated && mounted) context.go('/dashboard');
+    } catch (e) {
+      if (mounted) setState(() => _error = 'বায়োমেট্রিক ব্যর্থ: $e');
+    }
   }
 
   @override

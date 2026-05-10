@@ -60,26 +60,39 @@ class AssetList extends ConsumerWidget {
                 return await _confirmDelete(context);
               } else {
                 // Right-swipe: suspend (deterministic only) or resume
-                if (asset.isSuspended) {
-                  await AssetActions.resume(asset.id);
+                try {
+                  if (asset.isSuspended) {
+                    await AssetActions.resume(asset.id);
+                  } else if (asset.isDeterministic) {
+                    await AssetActions.suspend(asset.id);
+                  }
                   ref.invalidate(assetsProvider);
-                  return false; // don't dismiss
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('অ্যাকশন ব্যর্থ: $e')),
+                    );
+                  }
                 }
-                if (asset.isDeterministic) {
-                  await AssetActions.suspend(asset.id);
-                  ref.invalidate(assetsProvider);
-                  return false;
-                }
-                return false;
+                return false; // never dismiss for right-swipe
               }
             },
             onDismissed: (_) async {
-              await AssetActions.delete(asset.id);
-              ref.invalidate(assetsProvider);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${asset.name} মুছে ফেলা হয়েছে')),
-                );
+              try {
+                await AssetActions.delete(asset.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${asset.name} মুছে ফেলা হয়েছে')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('মুছতে ব্যর্থ: $e')),
+                  );
+                }
+              } finally {
+                ref.invalidate(assetsProvider);
               }
             },
             child: card,
@@ -169,8 +182,16 @@ class AssetList extends ConsumerWidget {
                 title: const Text('স্থগিত করুন', style: AppTextStyles.bodyLarge),
                 onTap: () async {
                   Navigator.pop(context);
-                  await AssetActions.suspend(asset.id);
-                  ref.invalidate(assetsProvider);
+                  try {
+                    await AssetActions.suspend(asset.id);
+                    ref.invalidate(assetsProvider);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('স্থগিত ব্যর্থ: $e')),
+                      );
+                    }
+                  }
                 },
               ),
             if (asset.isSuspended)
@@ -179,8 +200,16 @@ class AssetList extends ConsumerWidget {
                 title: const Text('চালু করুন', style: AppTextStyles.bodyLarge),
                 onTap: () async {
                   Navigator.pop(context);
-                  await AssetActions.resume(asset.id);
-                  ref.invalidate(assetsProvider);
+                  try {
+                    await AssetActions.resume(asset.id);
+                    ref.invalidate(assetsProvider);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('চালু করা ব্যর্থ: $e')),
+                      );
+                    }
+                  }
                 },
               ),
             ListTile(
@@ -190,9 +219,16 @@ class AssetList extends ConsumerWidget {
               onTap: () async {
                 Navigator.pop(context);
                 final ok = await _confirmDelete(context);
-                if (ok) {
+                if (!ok) return;
+                try {
                   await AssetActions.delete(asset.id);
                   ref.invalidate(assetsProvider);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('মুছতে ব্যর্থ: $e')),
+                    );
+                  }
                 }
               },
             ),

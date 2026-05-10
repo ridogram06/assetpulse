@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/providers/preferences_provider.dart';
 import '../../../../data/models/asset_model.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -11,6 +12,7 @@ class BudgetGauge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final symbol = ref.watch(currencyProvider).symbol;
     final spent = assets
         .where((a) => a.isDeterministic && a.status != 'expired')
         .fold<double>(0, (s, a) => s + a.cost);
@@ -38,7 +40,7 @@ class BudgetGauge extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('বাজেট ব্যবহার', style: AppTextStyles.bodySmall),
-              Text('৳${spent.toStringAsFixed(0)} / ৳${budget.toStringAsFixed(0)}',
+              Text('$symbol${spent.toStringAsFixed(0)} / $symbol${budget.toStringAsFixed(0)}',
                   style: AppTextStyles.bodySmall.copyWith(color: color)),
             ],
           ),

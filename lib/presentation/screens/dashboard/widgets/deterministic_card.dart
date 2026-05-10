@@ -34,7 +34,8 @@ class DeterministicCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currency = ref.watch(currencyProvider);
+    final pref = ref.watch(currencyProvider);
+    final symbol = currencySymbolFor(asset.currency, pref);
     return GestureDetector(
       onTap: () => context.push('/dashboard/asset/${asset.id}'),
       child: Container(
@@ -70,7 +71,7 @@ class DeterministicCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(currency),
+                _buildHeader(symbol),
                 const SizedBox(height: 12),
                 _buildDualTimePanel(),
                 const SizedBox(height: 12),
@@ -86,7 +87,7 @@ class DeterministicCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(Currency currency) {
+  Widget _buildHeader(String symbol) {
     return Row(
       children: [
         Text(asset.icon, style: const TextStyle(fontSize: 28)),
@@ -115,7 +116,7 @@ class DeterministicCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text('${currency.symbol}${asset.cost.toStringAsFixed(0)}/মাস',
+                  Text('$symbol${asset.cost.toStringAsFixed(0)}/মাস',
                       style: AppTextStyles.bodySmall),
                 ],
               ),

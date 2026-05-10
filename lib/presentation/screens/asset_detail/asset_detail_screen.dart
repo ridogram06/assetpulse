@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/providers/preferences_provider.dart';
 import '../../providers/asset_provider.dart';
 
 class AssetDetailScreen extends ConsumerWidget {
@@ -31,6 +32,8 @@ class AssetDetailScreen extends ConsumerWidget {
           if (asset == null) {
             return const Center(child: Text('Asset not found'));
           }
+          final pref = ref.watch(currencyProvider);
+          final symbol = currencySymbolFor(asset.currency, pref);
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -53,7 +56,7 @@ class AssetDetailScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               _InfoCard(children: [
                 _Row('ধরন', asset.isDeterministic ? 'নির্ধারিত' : 'সম্ভাব্য'),
-                _Row('খরচ', '৳${asset.cost.toStringAsFixed(2)}'),
+                _Row('খরচ', '$symbol${asset.cost.toStringAsFixed(2)}'),
                 _Row('মুদ্রা', asset.currency),
                 _Row('স্ট্যাটাস', asset.status),
                 _Row('শুরু',

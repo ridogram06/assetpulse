@@ -16,7 +16,8 @@ class ProbabilisticCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currency = ref.watch(currencyProvider);
+    final pref = ref.watch(currencyProvider);
+    final symbol = currencySymbolFor(asset.currency, pref);
     return GestureDetector(
       onTap: () => context.push('/dashboard/asset/${asset.id}'),
       child: Container(
@@ -41,7 +42,7 @@ class ProbabilisticCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(currency),
+                _buildHeader(symbol),
                 const SizedBox(height: 12),
                 _buildLiveClockPanel(),
                 if (asset.predictionConfidence != null &&
@@ -60,7 +61,7 @@ class ProbabilisticCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(Currency currency) {
+  Widget _buildHeader(String symbol) {
     final elapsed = DateTime.now().difference(asset.createdAt);
     final costPerDay = elapsed.inDays > 0
         ? asset.cost / elapsed.inDays
@@ -77,7 +78,7 @@ class ProbabilisticCard extends ConsumerWidget {
               Text(asset.name, style: AppTextStyles.titleMedium),
               const SizedBox(height: 2),
               Text(
-                '${currency.symbol}${costPerDay.toStringAsFixed(2)}/দিন · মোট ${currency.symbol}${asset.cost.toStringAsFixed(0)}',
+                '$symbol${costPerDay.toStringAsFixed(2)}/দিন · মোট $symbol${asset.cost.toStringAsFixed(0)}',
                 style: AppTextStyles.bodySmall,
               ),
             ],

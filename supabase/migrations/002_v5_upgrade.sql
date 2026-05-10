@@ -261,28 +261,39 @@ CREATE POLICY "read_own" ON edge_function_log
 
 -- =========================
 -- FIX-4: pg_cron master orchestrator
--- (requires pg_net extension enabled in Supabase: Database → Extensions)
+-- (requires pg_net + supabase_vault extensions enabled)
 -- =========================
--- NOTE: Before running the cron schedule, set these once in SQL editor:
---   ALTER DATABASE postgres SET app.supabase_url        = 'https://<your-ref>.supabase.co';
---   ALTER DATABASE postgres SET app.service_role_key    = '<service-role-jwt>';
--- Then reload the connection. The function reads them via current_setting().
+-- Supabase free tier does NOT allow `ALTER DATABASE ... SET app.x`,
+-- so we read secrets from Supabase Vault instead.
+--
+-- One-time setup (run in SQL Editor — see post-migration notes below):
+--   SELECT vault.create_secret('https://<ref>.supabase.co', 'app_supabase_url');
+--   SELECT vault.create_secret('<service-role-jwt>',        'app_service_role_key');
 
 CREATE OR REPLACE FUNCTION nightly_master_job()
-RETURNS void LANGUAGE plpgsql AS $$
+RETURNS void LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, vault
+AS $$
 DECLARE
   v_url  TEXT;
   v_key  TEXT;
 BEGIN
-  -- Step 1: status updates
+  -- Step 1: status updates (always runs)
   PERFORM update_asset_statuses();
 
-  -- Step 2: only attempt notification call if pg_net is available AND
-  --         the secrets are configured. Wrap in exception block so a
-  --         missing extension never breaks the status update.
+  -- Step 2: optional notification call. Guarded so missing extensions
+  -- or missing secrets never break the nightly status update.
   BEGIN
-    v_url := current_setting('app.supabase_url', true);
-    v_key := current_setting('app.service_role_key', true);
+    SELECT decrypted_secret INTO v_url
+      FROM vault.decrypted_secrets
+     WHERE name = 'app_supabase_url'
+     LIMIT 1;
+
+    SELECT decrypted_secret INTO v_key
+      FROM vault.decrypted_secrets
+     WHERE name = 'app_service_role_key'
+     LIMIT 1;
 
     IF v_url IS NOT NULL AND v_key IS NOT NULL THEN
       PERFORM net.http_post(
